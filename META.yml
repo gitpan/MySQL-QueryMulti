@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               MySQL-QueryMulti
-version:            0.03
+version:            0.04
 abstract:           module for querying multiple MySQL databases in parallel
 author:
     - John Gravatt <gravattj@cpan.org>

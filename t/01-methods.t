@@ -19,19 +19,7 @@ die if $?;
 
 $pass = defined( $ENV{DBI_PASS} ) ? $ENV{DBI_PASS} : undef;
 
-$qm = MySQL::QueryMulti->new;
-ok($qm);
-
-#
-# test the connect method
-#
-ok( $qm->connect(
-
-        # ($data_source, $username, $password, \%attr)
-        [ get_dsn('pet1'), $ENV{DBI_USER}, $pass ],
-        [ get_dsn('pet2'), $ENV{DBI_USER}, $pass ],
-    )
-);
+$qm = get_new_qm_obj();
 
 #
 # test a basic query
@@ -113,19 +101,40 @@ $comp = Data::Compare->new;
 ok( $comp->Cmp( \%expected, \%actual ) );
 
 #
+# test select distinct
+#
+$sql = q{
+    select distinct species
+    from pet
+    order by species
+};
+ok( $qm->prepare($sql) );
+ok( $sth = $qm->execute() );
+
+@expected = qw(bird cat dog hamster snake);
+@actual = ();
+
+while ( my ($species) = $sth->fetchrow_array ) {
+    push( @actual, $species );
+}
+
+$comp = Data::Compare->new;
+ok( $comp->Cmp( \@expected, \@actual ) );
+
+#
 # test with placeholders
 #
 $sql = q{
     select distinct species 
     from pet 
-    where age > ? 
+    where sex = ?
     order by species
 };
 
 ok( $qm->prepare($sql) );
-ok( $sth = $qm->execute(5) );
+ok( $sth = $qm->execute('m') );
 
-@expected = ( 'cat', 'dog' );
+@expected = ( 'cat', 'dog', 'snake' );
 @actual = ();
 
 while ( my ($species) = $sth->fetchrow_array ) {
@@ -138,15 +147,32 @@ ok( $comp->Cmp( \@expected, \@actual ) );
 #
 # try a bad clause
 #
-eval{ $qm->prepare("selec * from pet") };
-ok ($@);
+eval { $qm->prepare("selec * from pet") };
+ok($@);
 
 #
 # try a bad table
 #
-ok($qm->prepare("select * from bogus"));
-eval{ $qm->execute };
-ok ($@);
+ok( $qm->prepare("select * from bogus") );
+ok($@);
+
+#
+# try a bad query twice.  there was a bug that wasn't cleaning up sth's
+# properly when this occurred
+#
+eval { $qm->prepare("select id from pet") };
+ok( !$@ );
+eval { $qm->execute; };
+my $error1 = get_first_line($@);
+ok($@);
+
+eval { $qm->prepare("select id from pet") };
+ok( !$@ );
+eval { $qm->execute };
+my $error2 = get_first_line($@);
+ok($@);
+
+ok( $error1 eq $error2 );
 
 #
 # done!
@@ -154,6 +180,30 @@ ok ($@);
 done_testing();
 
 ########################
+
+sub get_first_line {
+    my $str = shift;
+    
+    return (split(/\n/, $str))[0];    
+}
+
+sub get_new_qm_obj {
+    my $qm = MySQL::QueryMulti->new;
+    ok($qm);
+    
+    #
+    # test the connect method
+    #
+    ok( $qm->connect(
+
+            # ($data_source, $username, $password, \%attr)
+            [ get_dsn('pet1'), $ENV{DBI_USER}, $pass ],
+            [ get_dsn('pet2'), $ENV{DBI_USER}, $pass ],
+        )
+    );
+
+    return $qm;
+}
 
 END {
 

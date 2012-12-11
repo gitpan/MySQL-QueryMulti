@@ -12,4 +12,5 @@ t/sql
 eg/load_pet_dbs.pl
 bin/mysqlqm
 CONF
+TODO
 META.yml                                 Module meta-data (added by MakeMaker)

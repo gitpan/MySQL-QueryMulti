@@ -6,6 +6,7 @@ use DBI;
 use Moose;
 use namespace::autoclean;
 use SQL::Statement;
+use Data::Dumper;
 
 =head1 NAME
 
@@ -13,11 +14,11 @@ MySQL::QueryMulti - module for querying multiple MySQL databases in parallel
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -75,7 +76,7 @@ has '_sth_list' => (
     is       => 'rw',
     isa      => 'ArrayRef',
     required => 0,
-    init_arg => undef,
+    default => sub { [ ] }
 );
 
 has '_temp_dbh' => (
@@ -143,6 +144,22 @@ has 'state' => (
     init_arg => undef,
 
 );
+
+has '_sql_parser' => (
+    is       => 'rw',
+    isa      => 'Object',
+    required => 0,
+    init_arg => undef
+);
+
+sub BUILD {
+    my $self = shift;
+
+    my $parser = SQL::Parser->new();
+    $parser->{RaiseError} = 1;
+    $parser->{PrintError} = 0;
+    $self->_sql_parser($parser);
+}
 
 =head1 SUBROUTINES/METHODS
 
@@ -229,8 +246,8 @@ sub connect {
 
             $self->_err_handler(
                 1,
-                "too many arguments detected for connection\n".
-                "\t[ $args ]\n",
+                "too many arguments detected for connection\n"
+                    . "\t[ $args ]\n",
                 ''
             );
             return 0;
@@ -247,7 +264,7 @@ sub connect {
         }
 
         # TODO: verify 'create temporary table' priv is enabled
-        
+
         push( @dbhs, $dbh );
     }
 
@@ -304,9 +321,7 @@ sub prepare {
     my ( $sql, $attr ) = @args;
     $attr->{async} = 1;
 
-    my $parser = SQL::Parser->new();
-    $parser->{RaiseError} = 1;
-    $parser->{PrintError} = 0;
+    my $parser = $self->_sql_parser;
 
     my $stmt = SQL::Statement->new( $sql, $parser );
     if ( $stmt->command eq 'CALL' or $stmt->command eq 'LOAD' ) {
@@ -325,6 +340,29 @@ sub prepare {
         }
     }
 
+    #
+    # cleanup for any errors that may have occurred on the last execute
+    #
+    foreach my $sth ( @{ $self->_sth_list } ) {
+        if (!defined($sth->mysql_async_ready))  {
+            # no outstanding query
+        }
+        elsif ($sth->mysql_async_ready) {
+            # async query done, harvest and discard result
+            $sth->mysql_async_result;
+        }
+        else {
+            # async query still running
+            while(!$sth->mysql_async_ready) {
+                # wait for it
+                sleep 1;
+            }
+            
+            # async query done, harvest and discard result
+            $sth->mysql_async_result;
+        }
+    }
+    
     my @sths;
     foreach my $dbh ( @{ $self->_dbh_list } ) {
         my $sth = $dbh->prepare( $sql, $attr );
@@ -383,7 +421,6 @@ sub execute {
                 if ( $sth->err ) {
                     $self->_err_handler( $sth->err, $sth->errstr, $sth->state );
                     return undef;
-
                 }
 
                 if ( $sth->{NUM_OF_FIELDS} ) {
@@ -476,7 +513,14 @@ sub _get_select_clause {
         push( @cols, $col );
     }
 
-    return 'select ' . join( ', ', @cols );
+    my $distinct = '';
+    if ( defined( $stmt->{set_quantifier} )
+        and $stmt->{set_quantifier} eq 'DISTINCT' )
+    {
+        $distinct = 'distinct';
+    }
+
+    return "select $distinct " . join( ', ', @cols );
 }
 
 sub _get_limit {
