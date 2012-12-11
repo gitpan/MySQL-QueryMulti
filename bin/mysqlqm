@@ -24,13 +24,10 @@ $|      = 1;
 $RcFile = "$ENV{HOME}/" . RCFILE;
 
 if ( !parse_cmd_line() and !parse_rc_file() ) {
-    print "here.10\n";
     if ( -e $RcFile ) {
-        print "here.20\n";
         print_usage();
     }
     else {
-        print "here.30\n";
         create_sample_rc_file();
         exit 0;
     }

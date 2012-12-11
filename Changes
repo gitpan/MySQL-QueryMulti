@@ -1,5 +1,7 @@
 Revision history for MySQL-QueryMulti
 
+0.03    removed debug statments from mysqlqm
+
 0.02	modified the PREREQ_PM info and added EXE_FILES
 
 0.01    Date/time
