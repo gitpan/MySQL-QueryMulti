@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               MySQL-QueryMulti
-version:            0.04
+version:            0.05
 abstract:           module for querying multiple MySQL databases in parallel
 author:
     - John Gravatt <gravattj@cpan.org>
@@ -11,16 +11,17 @@ configure_requires:
 build_requires:
     ExtUtils::MakeMaker:  0
 requires:
-    DBD::mysql:        4.019
-    DBI:               1.6
-    Math::BigInt:      1.994
-    Math::Complex:     1.56
-    Moose:             2.0403
-    SQL::Statement:    1.33
-    Term::ReadLine:    1.07
-    Test::More:        0
-    Text::ASCIITable:  0.18
-    Time::HiRes:       0
+    DBD::mysql:           4.019
+    DBI:                  1.6
+    Math::BigInt:         1.994
+    Math::Complex:        1.56
+    Moose:                2.0403
+    namespace::autoclean:  0.13
+    SQL::Statement:       1.33
+    Term::ReadLine:       1.07
+    Test::More:           0
+    Text::ASCIITable:     0.18
+    Time::HiRes:          0
 no_index:
     directory:
         - t

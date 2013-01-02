@@ -21,6 +21,7 @@ WriteMakefile(
         'Text::ASCIITable' => 0.18,
         'Term::ReadLine'   => 1.07,
         'Time::HiRes'      => 0,
+        'namespace::autoclean' => 0.13,
         
         # I had some older versions of these modules laying around and 
         # SQL::Statement 1.401 was failing some tests because of it.  
