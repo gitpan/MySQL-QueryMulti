@@ -17,7 +17,7 @@ $cmd = get_mysql_cmd() . " < t/sql";
 system($cmd);
 die if $?;
 
-$pass = defined( $ENV{DBI_PASS} ) ? $ENV{DBI_PASS} : undef;
+$pass = defined( $ENV{MYSQL_PASS} ) ? $ENV{MYSQL_PASS} : undef;
 
 $qm = get_new_qm_obj();
 
@@ -197,8 +197,8 @@ sub get_new_qm_obj {
     ok( $qm->connect(
 
             # ($data_source, $username, $password, \%attr)
-            [ get_dsn('pet1'), $ENV{DBI_USER}, $pass ],
-            [ get_dsn('pet2'), $ENV{DBI_USER}, $pass ],
+            [ get_dsn('pet1'), $ENV{MYSQL_USER}, $pass ],
+            [ get_dsn('pet2'), $ENV{MYSQL_USER}, $pass ],
         )
     );
 
@@ -220,7 +220,7 @@ END {
 sub get_dsn {
     my $db = shift;
 
-    my $dsn = $ENV{DBI_DSN};
+    my $dsn = "DBI:mysql:host=$ENV{MYSQL_HOST}";
     if ( $dsn !~ /\;\s*$/ ) {
         $dsn .= ";";
     }
@@ -231,10 +231,10 @@ sub get_dsn {
 }
 
 sub get_mysql_cmd {
-    my $cmd = "mysql -u $ENV{DBI_USER} -h $ENV{MYSQL_HOST} ";
-    $cmd .= '-p$Pass ' if defined( $ENV{DBI_PASS} );
-
-    return $cmd;
+    my $cmd = "mysql -u $ENV{MYSQL_USER} -h $ENV{MYSQL_HOST} ";
+    $cmd .= "-p$ENV{MYSQL_PASS} " if defined( $ENV{MYSQL_PASS} );
+    
+	return $cmd;
 }
 
 sub read_conf {

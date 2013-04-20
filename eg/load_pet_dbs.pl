@@ -23,7 +23,7 @@ die if $?;
 
 sub get_mysql_cmd {
     my $cmd = "mysql -u $ENV{DBI_USER} -h $ENV{MYSQL_HOST} ";
-    $cmd .= '-p$Pass ' if defined( $ENV{DBI_PASS} );
+    $cmd .= '-p$Pass ' if defined( $ENV{MYSQL_PASS} );
 
     return $cmd;
 }

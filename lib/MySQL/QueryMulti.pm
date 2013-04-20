@@ -14,11 +14,11 @@ MySQL::QueryMulti - module for querying multiple MySQL databases in parallel
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
@@ -158,6 +158,8 @@ sub BUILD {
     my $parser = SQL::Parser->new();
     $parser->{RaiseError} = 1;
     $parser->{PrintError} = 0;
+    $parser->parse("CREATE FUNCTION database");
+
     $self->_sql_parser($parser);
 }
 
@@ -252,8 +254,8 @@ sub connect {
             );
             return 0;
         }
-
-        my $dbh = eval { DBI->connect( @$aref, $attr ) };
+        
+		my $dbh = eval { DBI->connect( @$aref, $attr ) };
         if ($@) {
             $self->_err_handler( 1, $@, '' );
             return 0;
@@ -270,8 +272,8 @@ sub connect {
 
     # randomly pick one to be the designated temp table owner
     my $i = int( rand(@dbhs) );
-
-    my $temp_dbh = eval { DBI->connect( @{ $args[$i] }, $attr ) };
+    
+	my $temp_dbh = eval { DBI->connect( @{ $args[$i] }, $attr ) };
     if ($@) {
         $self->_err_handler( 1, $@, '' );
         return 0;
@@ -298,6 +300,17 @@ sub _err_handler {
     }
 }
 
+sub _give_database_func_alias {
+        my $self = shift;
+        my $sql = shift;
+
+        if ($sql =~ /database\(\s*\)/ and $sql !~ /database\(\s+\)\s+as\s+/) {
+                $sql =~ s/database\(\s*\)/database() as database_name/;
+
+        }
+        return $sql;
+}
+
 =head2 prepare
 
 Identical to DBI::prepare except it does the prepare for all databases in the 
@@ -316,9 +329,11 @@ sub prepare {
         return 0;
     }
 
-    $self->_prepare_args( [@args] );    # store prepare args for later use
-
     my ( $sql, $attr ) = @args;
+    $sql = $self->_give_database_func_alias($sql);
+
+    $self->_prepare_args( [ $sql, @args ] );    # store prepare args for later use
+
     $attr->{async} = 1;
 
     my $parser = $self->_sql_parser;
@@ -455,11 +470,6 @@ sub execute {
     }
 
     if ($select_query) {
-
-        my $parser = SQL::Parser->new();
-        $parser->{RaiseError} = 1;
-        $parser->{PrintError} = 0;
-
         my $select = $self->_get_select_clause( $self->_sql_stmt );
         my $sql    = "$select from $TEMP_TABLE_NAME\n";
 
