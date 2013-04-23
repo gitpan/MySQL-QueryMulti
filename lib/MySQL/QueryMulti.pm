@@ -14,27 +14,27 @@ MySQL::QueryMulti - module for querying multiple MySQL databases in parallel
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
  my $qm = MySQL::QueryMulti->new;
  $qm->connect(
-        [ get_dsn('pet1'), $ENV{DBI_USER}, $pass ],
-        [ get_dsn('pet2'), $ENV{DBI_USER}, $pass ],
-        ... repeat as necessary ...,
-        { AutoInactiveDestroy => 0 }
+		[ get_dsn('pet1'), $ENV{DBI_USER}, $pass ],
+		[ get_dsn('pet2'), $ENV{DBI_USER}, $pass ],
+		... repeat as necessary ...,
+		{ AutoInactiveDestroy => 0 }
  );
 
  $qm->prepare( "select * from pet order by owner" );  
  my $sth = $qm->execute; 
 
  while ( my @row = $sth->fetchrow_array ) {
-     print "@row\n";
+	 print "@row\n";
  } 
 
 =cut
@@ -66,101 +66,101 @@ L<http://en.wikipedia.org/wiki/Shard_%28database_architecture%29>
 my $TEMP_TABLE_NAME = 'mytemp';
 
 has '_dbh_list' => (
-    is       => 'rw',
-    isa      => 'ArrayRef',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'ArrayRef',
+	required => 0,
+	init_arg => undef,
 );
 
 has '_sth_list' => (
-    is       => 'rw',
-    isa      => 'ArrayRef',
-    required => 0,
-    default => sub { [ ] }
+	is       => 'rw',
+	isa      => 'ArrayRef',
+	required => 0,
+	default  => sub { [] }
 );
 
 has '_temp_dbh' => (
-    is       => 'rw',
-    isa      => 'Object',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'Object',
+	required => 0,
+	init_arg => undef,
 );
 
 has '_temp_prepare_stmt' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'Str',
+	required => 0,
+	init_arg => undef,
 );
 
 has '_prepare_args' => (
-    is       => 'rw',
-    isa      => 'ArrayRef',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'ArrayRef',
+	required => 0,
+	init_arg => undef,
 );
 
 has '_execute_args' => (
-    is       => 'rw',
-    isa      => 'ArrayRef',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'ArrayRef',
+	required => 0,
+	init_arg => undef,
 );
 
 has '_sql_stmt' => (
-    is       => 'rw',
-    isa      => 'Object',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'Object',
+	required => 0,
+	init_arg => undef,
 );
 
 has 'raise_error' => (
-    is       => 'rw',
-    isa      => 'Int',
-    required => 0,
-    default  => 1,
+	is       => 'rw',
+	isa      => 'Int',
+	required => 0,
+	default  => 1,
 );
 
 has 'err' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'Str',
+	required => 0,
+	init_arg => undef,
 
 );
 
 has 'errstr' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'Str',
+	required => 0,
+	init_arg => undef,
 
 );
 
 has 'state' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 0,
-    init_arg => undef,
+	is       => 'rw',
+	isa      => 'Str',
+	required => 0,
+	init_arg => undef,
 
 );
 
 has '_sql_parser' => (
-    is       => 'rw',
-    isa      => 'Object',
-    required => 0,
-    init_arg => undef
+	is       => 'rw',
+	isa      => 'Object',
+	required => 0,
+	init_arg => undef
 );
 
 sub BUILD {
-    my $self = shift;
+	my $self = shift;
 
-    my $parser = SQL::Parser->new();
-    $parser->{RaiseError} = 1;
-    $parser->{PrintError} = 0;
-    $parser->parse("CREATE FUNCTION database");
-
-    $self->_sql_parser($parser);
+	my $parser = SQL::Parser->new();
+	$parser->{RaiseError} = 1;
+	$parser->{PrintError} = 0;
+	$parser->parse("CREATE FUNCTION database");
+	$parser->feature( 'function', 'database' );
+	$self->_sql_parser($parser);
 }
 
 =head1 SUBROUTINES/METHODS
@@ -195,10 +195,10 @@ example:
 =over
 
 $qm->connect(
-        [ get_dsn('pet1'), $ENV{DBI_USER}, $pass ],
-        [ get_dsn('pet2'), $ENV{DBI_USER}, $pass ],
-        ... repeat as necessary ...,
-        { AutoInactiveDestroy => 0 }
+		[ get_dsn('pet1'), $ENV{DBI_USER}, $pass ],
+		[ get_dsn('pet2'), $ENV{DBI_USER}, $pass ],
+		... repeat as necessary ...,
+		{ AutoInactiveDestroy => 0 }
 );
 
 =back
@@ -206,109 +206,116 @@ $qm->connect(
 =cut
 
 sub connect {
-    my $self = shift;
-    my @args = @_;      # each element is an array ref that contains arguments
-                        # to pass to DBI::connect
+	my $self = shift;
+	my @args = @_;      # each element is an array ref that contains arguments
+						# to pass to DBI::connect
 
-    if ( @args < 1 ) {
-        $self->_err_handler( 1,
-            "must provide connection info for at least one database", '' );
-        return 0;
-    }
+	if ( @args < 1 ) {
+		$self->_err_handler( 1,
+			"must provide connection info for at least one database", '' );
+		return 0;
+	}
 
-    my $last_arg = scalar(@args) - 1;
-    my $attr;
+	my $last_arg = scalar(@args) - 1;
+	my $attr;
 
-    if ( ref( $args[$last_arg] ) eq 'HASH' ) {
-        $attr = pop(@args);
-    }
-    else {
-        $attr = {};
-    }
+	if ( ref( $args[$last_arg] ) eq 'HASH' ) {
+		$attr = pop(@args);
+	}
+	else {
+		$attr = {};
+	}
 
-    $attr->{RaiseError} = 0;
-    $attr->{PrintError} = 0;
+	$attr->{RaiseError} = 0;
+	$attr->{PrintError} = 0;
 
-    my @dbhs;
+	my @dbhs;
 
-    foreach my $aref (@args) {
-        if ( @$aref > 3 ) {
+	foreach my $aref (@args) {
+		if ( @$aref > 3 ) {
 
-            #
-            # don't allow attributes to be specified differently per connection
-            #
-            my $args;
-            if ( @$aref > 0 ) {
-                no warnings;
-                $args = join( ', ', @$aref );
-            }
-            else {
-                $args = '';
-            }
+			#
+			# don't allow attributes to be specified differently per connection
+			#
+			my $args;
+			if ( @$aref > 0 ) {
+				no warnings;
+				$args = join( ', ', @$aref );
+			}
+			else {
+				$args = '';
+			}
 
-            $self->_err_handler(
-                1,
-                "too many arguments detected for connection\n"
-                    . "\t[ $args ]\n",
-                ''
-            );
-            return 0;
-        }
-        
+			$self->_err_handler(
+				1,
+				"too many arguments detected for connection\n"
+				  . "\t[ $args ]\n",
+				''
+			);
+			return 0;
+		}
+
 		my $dbh = eval { DBI->connect( @$aref, $attr ) };
-        if ($@) {
-            $self->_err_handler( 1, $@, '' );
-            return 0;
-        }
-        elsif ( !defined($dbh) ) {
-            $self->_err_handler( $DBI::err, $DBI::errstr, $DBI::state );
-            return 0;
-        }
+		if ($@) {
+			$self->_err_handler( 1, $@, '' );
+			return 0;
+		}
+		elsif ( !defined($dbh) ) {
+			print "connected to $aref->[0]\n" if $ENV{VERBOSE};
+			$self->_err_handler( $DBI::err, $DBI::errstr, $DBI::state );
+			return 0;
+		}
 
-        # TODO: verify 'create temporary table' priv is enabled
+		# TODO: verify 'create temporary table' priv is enabled
 
-        push( @dbhs, $dbh );
-    }
+		push( @dbhs, $dbh );
+	}
 
-    # randomly pick one to be the designated temp table owner
-    my $i = int( rand(@dbhs) );
-    
+	# randomly pick one to be the designated temp table owner
+	my $i = int( rand(@dbhs) );
+
 	my $temp_dbh = eval { DBI->connect( @{ $args[$i] }, $attr ) };
-    if ($@) {
-        $self->_err_handler( 1, $@, '' );
-        return 0;
-    }
-    elsif ($DBI::err) {
-        $self->_err_handler( $DBI::err, $DBI::errstr, $DBI::state );
-        return 0;
-    }
+	if ($@) {
+		$self->_err_handler( 1, $@, '' );
+		return 0;
+	}
+	elsif ($DBI::err) {
+		$self->_err_handler( $DBI::err, $DBI::errstr, $DBI::state );
+		return 0;
+	}
 
-    $self->_temp_dbh($temp_dbh);
-    $self->_dbh_list( \@dbhs );
+	$self->_temp_dbh($temp_dbh);
+	$self->_dbh_list( \@dbhs );
 
-    return 1;
+	return 1;
 }
 
 sub _err_handler {
-    my $self = shift;
-    $self->err(shift);
-    $self->errstr(shift);
-    $self->state(shift);
+	my $self = shift;
+	$self->err(shift);
+	$self->errstr(shift);
+	$self->state(shift);
 
-    if ( $self->raise_error ) {
-        confess "ERROR: " . $self->errstr;
-    }
+	if ( $self->raise_error ) {
+		confess "ERROR: " . $self->errstr;
+	}
 }
 
 sub _give_database_func_alias {
-        my $self = shift;
-        my $sql = shift;
+	my $self = shift;
+	my $sql  = shift;
 
-        if ($sql =~ /database\(\s*\)/ and $sql !~ /database\(\s+\)\s+as\s+/) {
-                $sql =~ s/database\(\s*\)/database() as database_name/;
+	print STDERR "orig sql:\n$sql\n" if $ENV{DEBUG};
 
-        }
-        return $sql;
+	if ( $sql =~ /database\(\s*\)/ ) {
+		if ( $sql !~ /database\(\s*\)\s+as\s+/ ) {
+			$sql =~ s/database\(\s*\)/database() as database_name/;
+		}
+	}
+
+	print STDERR "new sql:\n$sql\n" if $ENV{DEBUG};
+
+	return $sql;
 }
 
 =head2 prepare
@@ -320,79 +327,91 @@ Returns true on success or false on error.
 
 =cut
 
+around 'prepare' => sub {
+	my $orig = shift;
+	my $self = shift;
+
+	my @args = @_;
+	my $sql  = shift @args;
+	$sql = $self->_give_database_func_alias($sql);
+	unshift @args, $sql;
+
+	$self->$orig(@args);
+};
+
 sub prepare {
-    my $self = shift;
-    my @args = @_;      # ($statement, \%attr)
+	my $self = shift;
+	my @args = @_;      # ($statement, \%attr)
 
-    if ( @args < 1 ) {
-        $self->_err_handler( 1, "must provide prepare args", '' );
-        return 0;
-    }
+	if ( @args < 1 ) {
+		$self->_err_handler( 1, "must provide prepare args", '' );
+		return 0;
+	}
 
-    my ( $sql, $attr ) = @args;
-    $sql = $self->_give_database_func_alias($sql);
+	my ( $sql, $attr ) = @args;
+	$self->_prepare_args( [ $sql, @args ] );  # store prepare args for later use
+	$attr->{async} = 1;
 
-    $self->_prepare_args( [ $sql, @args ] );    # store prepare args for later use
+	my $parser = $self->_sql_parser;
 
-    $attr->{async} = 1;
+	my $stmt = SQL::Statement->new( $sql, $parser );
+	if ( $stmt->command eq 'CALL' or $stmt->command eq 'LOAD' ) {
+		$self->_err_handler( 1, $stmt->command . " is not implemented", '' );
+		return 0;
+	}
 
-    my $parser = $self->_sql_parser;
+	foreach my $col_def ( @{ $stmt->column_defs } ) {
+		next unless exists( $col_def->{name} );
+		my $name = $col_def->{name};
 
-    my $stmt = SQL::Statement->new( $sql, $parser );
-    if ( $stmt->command eq 'CALL' or $stmt->command eq 'LOAD' ) {
-        $self->_err_handler( 1, $stmt->command . " is not implemented", '' );
-        return 0;
-    }
+		if ( $name eq 'COUNT' or $name eq 'AVG' ) {
+			$self->_err_handler( 1,
+				"$name aggregate function is not implemented", '' );
+			return 0;
+		}
+	}
 
-    foreach my $col_def ( @{ $stmt->column_defs } ) {
-        next unless exists( $col_def->{name} );
-        my $name = $col_def->{name};
+	#
+	# cleanup for any errors that may have occurred on the last execute
+	#
+	foreach my $sth ( @{ $self->_sth_list } ) {
+		if ( !defined( $sth->mysql_async_ready ) ) {
 
-        if ( $name eq 'COUNT' or $name eq 'AVG' ) {
-            $self->_err_handler( 1,
-                "$name aggregate function is not implemented", '' );
-            return 0;
-        }
-    }
+			# no outstanding query
+		}
+		elsif ( $sth->mysql_async_ready ) {
 
-    #
-    # cleanup for any errors that may have occurred on the last execute
-    #
-    foreach my $sth ( @{ $self->_sth_list } ) {
-        if (!defined($sth->mysql_async_ready))  {
-            # no outstanding query
-        }
-        elsif ($sth->mysql_async_ready) {
-            # async query done, harvest and discard result
-            $sth->mysql_async_result;
-        }
-        else {
-            # async query still running
-            while(!$sth->mysql_async_ready) {
-                # wait for it
-                sleep 1;
-            }
-            
-            # async query done, harvest and discard result
-            $sth->mysql_async_result;
-        }
-    }
-    
-    my @sths;
-    foreach my $dbh ( @{ $self->_dbh_list } ) {
-        my $sth = $dbh->prepare( $sql, $attr );
-        if ( !$sth ) {
-            $self->_err_handler( $DBI::err, $DBI::errstr, $DBI::state );
-            return 0;
-        }
+			# async query done, harvest and discard result
+			$sth->mysql_async_result;
+		}
+		else {
+			# async query still running
+			while ( !$sth->mysql_async_ready ) {
 
-        push( @sths, $sth );
-    }
+				# wait for it
+				sleep 1;
+			}
 
-    $self->_sth_list( \@sths );
-    $self->_sql_stmt($stmt);
+			# async query done, harvest and discard result
+			$sth->mysql_async_result;
+		}
+	}
 
-    return 1;
+	my @sths;
+	foreach my $dbh ( @{ $self->_dbh_list } ) {
+		my $sth = $dbh->prepare( $sql, $attr );
+		if ( !$sth ) {
+			$self->_err_handler( $DBI::err, $DBI::errstr, $DBI::state );
+			return 0;
+		}
+
+		push( @sths, $sth );
+	}
+
+	$self->_sth_list( \@sths );
+	$self->_sql_stmt($stmt);
+
+	return 1;
 }
 
 =head2 execute
@@ -407,256 +426,264 @@ undef on error.
 =cut
 
 sub execute {
-    my $self = shift;
-    my @args = @_;
+	my $self = shift;
+	my @args = @_;
 
-    $self->_execute_args( [@args] );
+	$self->_execute_args( [@args] );
 
-    my @pending;
-    my @results;
+	my @pending;
+	my @results;
 
-    foreach my $sth ( @{ $self->_sth_list } ) {
-        $sth->execute(@args);
-        if ( $sth->err ) {
-            $self->_err_handler( $sth->err, $sth->errstr, $sth->state );
-            return undef;
-        }
+	foreach my $sth ( @{ $self->_sth_list } ) {
+		$sth->execute(@args);
+		if ( $sth->err ) {
+			$self->_err_handler( $sth->err, $sth->errstr, $sth->state );
+			return undef;
+		}
 
-        push( @pending, $sth );
-    }
+		push( @pending, $sth );
+	}
 
-    my $select_query  = 0;
-    my $rows_affected = 0;
+	my $select_query  = 0;
+	my $rows_affected = 0;
 
-    while (@pending) {
-        my @temp;
-        foreach my $sth (@pending) {
-            if ( $sth->mysql_async_ready ) {
-                my $ret = $sth->mysql_async_result;
-                if ( $sth->err ) {
-                    $self->_err_handler( $sth->err, $sth->errstr, $sth->state );
-                    return undef;
-                }
+	while (@pending) {
+		my @temp;
+		foreach my $sth (@pending) {
+			if ( $sth->mysql_async_ready ) {
+				my $ret = $sth->mysql_async_result;
+				if ( $sth->err ) {
+					$self->_err_handler( $sth->err, $sth->errstr, $sth->state );
+					return undef;
+				}
 
-                if ( $sth->{NUM_OF_FIELDS} ) {
+				if ( $sth->{NUM_OF_FIELDS} ) {
 
-                    #
-                    # we have a select query
-                    #
-                    if ( !$select_query ) {
-                        $self->_create_temp_table();
-                        $select_query = 1;
-                    }
+					#
+					# we have a select query
+					#
+					if ( !$select_query ) {
+						$self->_create_temp_table();
+						$select_query = 1;
+					}
 
-                    while ( my $aref = $sth->fetchrow_arrayref ) {
-                        $self->_add_row_to_temp_table($aref);
-                    }
-                }
-                else {
+					while ( my $aref = $sth->fetchrow_arrayref ) {
+						$self->_add_row_to_temp_table($aref);
+					}
+				}
+				else {
 
-                    #
-                    # we have an insert, update, or delete query
-                    #
-                    $rows_affected += $ret;
-                }
-            }
-            else {
-                push( @temp, $sth );
-            }
-        }
+					#
+					# we have an insert, update, or delete query
+					#
+					$rows_affected += $ret;
+				}
+			}
+			else {
+				push( @temp, $sth );
+			}
+		}
 
-        @pending = @temp;
-        sleep 1;
-    }
+		@pending = @temp;
+		sleep 1;
+	}
 
-    if ($select_query) {
-        my $select = $self->_get_select_clause( $self->_sql_stmt );
-        my $sql    = "$select from $TEMP_TABLE_NAME\n";
+	if ($select_query) {
+		my $select = $self->_get_select_clause( $self->_sql_stmt );
+		my $sql    = "$select from $TEMP_TABLE_NAME\n";
 
-        # skip the where clause because it is redundant
-        $sql .= $self->_get_group_by( $self->_sql_stmt );
-        $sql .= $self->_get_order_by( $self->_sql_stmt );
-        $sql .= $self->_get_limit( $self->_sql_stmt );
+		# skip the where clause because it is redundant
+		$sql .= $self->_get_group_by( $self->_sql_stmt );
+		$sql .= $self->_get_order_by( $self->_sql_stmt );
+		$sql .= $self->_get_limit( $self->_sql_stmt );
 
-        my $dbh = $self->_get_temp_dbh;
-        my $sth = $dbh->prepare($sql);
-        if ( $dbh->err ) {
-            $self->_err_handler( $dbh->err, $dbh->errstr, $dbh->state );
-            return undef;
-        }
+		my $dbh = $self->_get_temp_dbh;
 
-        $sth->execute();
-        if ( $dbh->err ) {
-            $self->_err_handler( $dbh->err, $dbh->errstr, $dbh->state );
-            return undef;
-        }
+		my $sth = $dbh->prepare($sql);
+		if ( $dbh->err ) {
+			$self->_err_handler( $dbh->err, $dbh->errstr, $dbh->state );
+			return undef;
+		}
 
-        return $sth;
-    }
+		$sth->execute();
+		if ( $dbh->err ) {
+			$self->_err_handler( $dbh->err, $dbh->errstr, $dbh->state );
+			return undef;
+		}
 
-    return $rows_affected;
+		return $sth;
+	}
+
+	return $rows_affected;
 }
 
 sub _get_select_clause {
-    my $self = shift;
-    my $stmt = shift;
+	my $self = shift;
+	my $stmt = shift;
 
-    my @cols;
+	my @cols;
 
-    foreach my $col_def ( @{ $stmt->column_defs } ) {
-        my $col;
-        if ( $col_def->{type} ne 'column' ) {
-            $col = $col_def->{fullorg};
-            $col =~ s/\s//g;
-        }
-        else {
-            $col
-                = defined( $col_def->{fullorg} )
-                ? $col_def->{fullorg}
-                : $col_def->{value};
-        }
+	foreach my $col_def ( @{ $stmt->column_defs } ) {
+		my $col;
 
-        if ( defined( $col_def->{alias} ) ) {
-            $col .= " as $col_def->{alias}";
-        }
+		if ( $col_def->{type} eq 'function' and $col_def->{name} eq 'database' )
+		{
+			$col = $col_def->{alias};
+		}
+		else {
+			if ( $col_def->{type} ne 'column' ) {
+				$col = $col_def->{fullorg};
+				$col =~ s/\s//g;
+			}
+			else {
+				$col =
+				  defined( $col_def->{fullorg} )
+				  ? $col_def->{fullorg}
+				  : $col_def->{value};
+			}
 
-        push( @cols, $col );
-    }
+			if ( defined( $col_def->{alias} ) ) {
+				$col .= " as $col_def->{alias}";
+			}
+		}
 
-    my $distinct = '';
-    if ( defined( $stmt->{set_quantifier} )
-        and $stmt->{set_quantifier} eq 'DISTINCT' )
-    {
-        $distinct = 'distinct';
-    }
+		push( @cols, $col );
+	}
 
-    return "select $distinct " . join( ', ', @cols );
+	my $distinct = '';
+	if ( defined( $stmt->{set_quantifier} )
+		and $stmt->{set_quantifier} eq 'DISTINCT' )
+	{
+		$distinct = 'distinct';
+	}
+
+	return "select $distinct " . join( ', ', @cols );
 }
 
 sub _get_limit {
-    my $self = shift;
-    my $stmt = shift;
+	my $self = shift;
+	my $stmt = shift;
 
-    my $limit = $stmt->limit;
-    if ( defined($limit) ) {
-        return "limit $limit\n";
-    }
+	my $limit = $stmt->limit;
+	if ( defined($limit) ) {
+		return "limit $limit\n";
+	}
 
-    return '';
+	return '';
 }
 
 sub _get_order_by {
-    my $self = shift;
-    my $stmt = shift;
+	my $self = shift;
+	my $stmt = shift;
 
-    my @order = $stmt->order();
-    my @cols;
+	my @order = $stmt->order();
+	my @cols;
 
-    foreach my $o (@order) {
-        my $col  = ( keys(%$o) )[0];
-        my $sort = $o->{$col};
+	foreach my $o (@order) {
+		my $col  = ( keys(%$o) )[0];
+		my $sort = $o->{$col};
 
-        push( @cols, "$col $sort" );
-    }
+		push( @cols, "$col $sort" );
+	}
 
-    if (@cols) {
-        return 'order by ' . join( ', ', @cols ) . "\n";
-    }
+	if (@cols) {
+		return 'order by ' . join( ', ', @cols ) . "\n";
+	}
 
-    return '';
+	return '';
 }
 
 sub _get_group_by {
-    my $self = shift;
-    my $stmt = shift;
+	my $self = shift;
+	my $stmt = shift;
 
-    if ( defined( $stmt->{group_by} ) ) {
-        my @cols = @{ $stmt->{group_by} };
+	if ( defined( $stmt->{group_by} ) ) {
+		my @cols = @{ $stmt->{group_by} };
 
-        return 'group by ' . join( ', ', @cols ) . "\n";
-    }
+		return 'group by ' . join( ', ', @cols ) . "\n";
+	}
 
-    return '';
+	return '';
 }
 
 sub _get_temp_dbh {
-    my $self = shift;
+	my $self = shift;
 
-    return $self->_temp_dbh;
+	return $self->_temp_dbh;
 }
 
 sub _create_temp_table {
-    my $self = shift;
+	my $self = shift;
 
-    $self->_drop_temp_table;
+	$self->_drop_temp_table;
 
-    my $dbh = $self->_get_temp_dbh;
+	my $dbh = $self->_get_temp_dbh;
 
-    my ( $sql, $attr ) = @{ $self->_prepare_args };
+	my ( $sql, $attr ) = @{ $self->_prepare_args };
 
-    if ( $sql =~ /limit \d+/i ) {
-        $sql =~ s/limit \d+/limit 0/;
-    }
-    else {
-        $sql .= ' limit 0';
-    }
+	if ( $sql =~ /limit \d+/i ) {
+		$sql =~ s/limit \d+/limit 0/;
+	}
+	else {
+		$sql .= ' limit 0';
+	}
 
-    my $create_sql = "create temporary table $TEMP_TABLE_NAME as $sql";
-    my $sth        = $dbh->prepare($create_sql);
-    if ( $sth->err ) {
-        $self->_err_handler( $sth->err, $sth->errstr, $sth->state );
-        return 0;
-    }
+	my $create_sql = "create temporary table $TEMP_TABLE_NAME as $sql";
+	my $sth        = $dbh->prepare($create_sql);
+	if ( $sth->err ) {
+		$self->_err_handler( $sth->err, $sth->errstr, $sth->state );
+		return 0;
+	}
 
-    $sth->execute( @{ $self->_execute_args } );
-    if ( $sth->err ) {
-        $self->_err_handler( $sth->err, $sth->errstr, $sth->state );
-        return 0;
-    }
+	$sth->execute( @{ $self->_execute_args } );
+	if ( $sth->err ) {
+		$self->_err_handler( $sth->err, $sth->errstr, $sth->state );
+		return 0;
+	}
 
-    $sql = qq{
-        select * from $TEMP_TABLE_NAME
-    };
-    $sth = $dbh->prepare($sql);
-    $sth->execute;
+	$sql = qq{
+		select * from $TEMP_TABLE_NAME
+	};
+	$sth = $dbh->prepare($sql);
+	$sth->execute;
 
-    my @placeholders;
-    for ( my $i = 0; $i < $sth->{NUM_OF_FIELDS}; $i++ ) {
-        push( @placeholders, '?' );
-    }
+	my @placeholders;
+	for ( my $i = 0 ; $i < $sth->{NUM_OF_FIELDS} ; $i++ ) {
+		push( @placeholders, '?' );
+	}
 
-    my $placeholders = join( ', ', @placeholders );
+	my $placeholders = join( ', ', @placeholders );
 
-    my $tmp_prepare_stmt = qq{
-        insert into $TEMP_TABLE_NAME values ($placeholders)
-    };
+	my $tmp_prepare_stmt = qq{
+		insert into $TEMP_TABLE_NAME values ($placeholders)
+	};
 
-    $self->_temp_prepare_stmt($tmp_prepare_stmt);
+	$self->_temp_prepare_stmt($tmp_prepare_stmt);
 }
 
 sub _drop_temp_table {
-    my $self = shift;
+	my $self = shift;
 
-    my $dbh = $self->_get_temp_dbh;
+	my $dbh = $self->_get_temp_dbh;
 
-    my $sql = qq{
-        drop temporary table if exists $TEMP_TABLE_NAME
-    };
-    $dbh->do($sql);
-    if ( $dbh->err ) {
-        $self->_err_handler( $dbh->err, $dbh->errstr, $dbh->state );
-        return 0;
-    }
+	my $sql = qq{
+		drop temporary table if exists $TEMP_TABLE_NAME
+	};
+	$dbh->do($sql);
+	if ( $dbh->err ) {
+		$self->_err_handler( $dbh->err, $dbh->errstr, $dbh->state );
+		return 0;
+	}
 }
 
 sub _add_row_to_temp_table {
-    my $self = shift;
-    my $aref = shift;
+	my $self = shift;
+	my $aref = shift;
 
-    my $dbh = $self->_get_temp_dbh;
+	my $dbh = $self->_get_temp_dbh;
 
-    my $sth = $dbh->prepare( $self->_temp_prepare_stmt );
-    $sth->execute(@$aref);
+	my $sth = $dbh->prepare( $self->_temp_prepare_stmt );
+	$sth->execute(@$aref);
 }
 
 =head1 LIMITATIONS
@@ -688,7 +715,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc MySQL::QueryMulti
+	perldoc MySQL::QueryMulti
 
 
 You can also look for information at:
